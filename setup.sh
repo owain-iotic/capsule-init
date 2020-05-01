@@ -16,15 +16,17 @@ systemctl enable --now kubelet
 kubectl apply -f /opt/iotics/weave-network.yaml
 kubectl taint nodes --all node-role.kubernetes.io/master-
 
-# flux 
-kubectl create ns flux
+sudo yum install -y bash-completion bash-completion-extras
 
+# flux 
 wget https://github.com/fluxcd/flux/releases/download/1.19.0/fluxctl_linux_amd64
 chmod +x fluxctl_linux_amd64
 sudo mv fluxctl_linux_amd64 /usr/local/bin/fluxctl 
 
+
+kubectl create ns flux
 export GHUSER="owain-iotic"
-fluxctl install --git-user=${GHUSER} --git-email=${GHUSER}@users.noreply.github.com --git-url=git@github.com:${GHUSER}/tryk-flux --git-path=namespaces,workloads --namespace=flux > flux.yaml
+fluxctl install --git-readonly --git-user=${GHUSER} --git-email=${GHUSER}@users.noreply.github.com --git-url=https://github.com/owain-iotic/tryk-flux.git  --git-path=namespaces,workloads --namespace=flux > flux.yaml
 kubectl apply -f ./flux.yaml
 
 mkdir -p /home/centos/.kube
@@ -34,7 +36,10 @@ sudo chown centos:centos /home/centos/.kube/config
 mkdir -p /root/.kube
 sudo cp -i /etc/kubernetes/admin.conf /root/.kube/config
 sudo chown root:root /root/.kube/config
-
+echo "alias fluxsync='fluxctl --k8s-fwd-ns=flux sync'" >> /home/centos/.bashrc
+echo "source <(kubectl completion bash)" >> /home/centos/.bashrc
+echo "alias fluxsync='fluxctl --k8s-fwd-ns=flux sync'" >> /root/.bashrc
+echo "source <(kubectl completion bash)" >> /root/.bashrc
 echo `date` >> /opt/iotics/bootscript-run
 
 
