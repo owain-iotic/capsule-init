@@ -14,15 +14,27 @@ export KUBECONFIG=/etc/kubernetes/admin.conf
 systemctl enable --now kubelet
 
 kubectl apply -f /opt/iotics/weave-network.yaml
-
 kubectl taint nodes --all node-role.kubernetes.io/master-
 
-mkdir -p centos/.kube
-sudo cp -i /etc/kubernetes/admin.conf centos/.kube/config
-sudo chown centos:centos centos/.kube/config
+# flux 
+kubectl create ns flux
+
+wget https://github.com/fluxcd/flux/releases/download/1.19.0/fluxctl_linux_amd64
+chmod +x fluxctl_linux_amd64
+sudo mv fluxctl_linux_amd64 /usr/local/bin/fluxctl 
+
+export GHUSER="owain-iotic"
+fluxctl install --git-user=${GHUSER} --git-email=${GHUSER}@users.noreply.github.com --git-url=git@github.com:${GHUSER}/tryk-flux --git-path=namespaces,workloads --namespace=flux > flux.yaml
+kubectl apply -f ./flux.yaml
+
+mkdir -p /home/centos/.kube
+sudo cp -i /etc/kubernetes/admin.conf /home/centos/.kube/config
+sudo chown centos:centos /home/centos/.kube/config
 
 mkdir -p /root/.kube
 sudo cp -i /etc/kubernetes/admin.conf /root/.kube/config
 sudo chown root:root /root/.kube/config
 
 echo `date` >> /opt/iotics/bootscript-run
+
+
